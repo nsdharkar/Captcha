@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Captcha.Tests/Captcha.Tests.csproj" />
+  <Project Path="Captcha/Captcha.csproj" />
+</Solution>
