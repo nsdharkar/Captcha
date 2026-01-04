@@ -1,5 +1,4 @@
 ﻿using Captcha.Repository;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using Captcha.Models;
@@ -14,13 +13,16 @@ namespace Captcha.Controllers
         private readonly ICaptchaTextGeneratorService _textGeneratorService;
 
         private readonly ICaptchaImageGeneratorService _imageGeneratorService;
+        private readonly ILogger<CaptchaController> _logger;
 
         public CaptchaController(
             ICaptchaTextGeneratorService textGeneratorService,
-            ICaptchaImageGeneratorService imageGeneratorService)
+            ICaptchaImageGeneratorService imageGeneratorService,
+            ILogger<CaptchaController> logger)
         {
             _textGeneratorService = textGeneratorService;
             _imageGeneratorService = imageGeneratorService;
+            _logger = logger;
         }
 
         [HttpGet("Captcha")]
@@ -41,23 +43,60 @@ namespace Captcha.Controllers
         [HttpPost("validate")]
         public IActionResult ValidateCaptcha(string userInput)
         {
-            var _captcha = HttpContext.Session.GetString("Captcha");
+            _logger.LogInformation("ValidateCaptcha called. SessionId: {SessionId}", HttpContext.Session.Id);
 
-            if (_captcha == null) return BadRequest("Captcha expired");
-
-            var _captchaText = JsonSerializer.Deserialize<CaptchaData>(_captcha);
-
-            if (_captchaText != null)
+            try
             {
-                if (DateTime.UtcNow - _captchaText.CaptchaCreatedAt > TimeSpan.FromMinutes(2))
-                    return BadRequest("Captcha expired");
-                else
-                    if (!string.Equals(userInput, _captchaText.CaptchaValue, StringComparison.OrdinalIgnoreCase))
-                    return BadRequest("Invalid captcha");
-            }
 
-            HttpContext.Session.Remove("Captcha"); // One-time use
-            return Ok("Valid");
+
+                var _captcha = HttpContext.Session.GetString("Captcha");
+
+                if (_captcha == null)
+                {
+                    _logger.LogWarning(
+                    "Captcha expired or missing. SessionId: {SessionId}",
+                    HttpContext.Session.Id);
+
+                    return BadRequest("Captcha expired");
+                }
+
+                var _captchaText = JsonSerializer.Deserialize<CaptchaData>(_captcha);
+
+                if (_captchaText != null)
+                {
+                    if (DateTime.UtcNow - _captchaText.CaptchaCreatedAt > TimeSpan.FromMinutes(2))
+                    {
+                        _logger.LogWarning(
+                            "Captcha expired due to timeout. CreatedAt: {CreatedAt}, SessionId: {SessionId}",
+                            _captchaText.CaptchaCreatedAt,
+                            HttpContext.Session.Id);
+                        return BadRequest("Captcha expired");
+                    }
+                    else
+                        if (!string.Equals(userInput, _captchaText.CaptchaValue, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogWarning(
+                        "Invalid captcha attempt. InputLength: {Length}, SessionId: {SessionId}",
+                        userInput?.Length ?? 0,
+                        HttpContext.Session.Id);
+                        return BadRequest("Invalid captcha");
+                    }
+                }
+                else
+                {
+                    _logger.LogError("Failed to deserialize captcha data. SessionId: {SessionId}", HttpContext.Session.Id);
+                    return BadRequest("Invalid captcha data");
+                }
+
+                HttpContext.Session.Remove("Captcha"); // One-time use
+                _logger.LogInformation("Captcha validated successfully. SessionId: {SessionId}", HttpContext.Session.Id);
+                return Ok("Valid");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error validating captcha. SessionId: {SessionId}", HttpContext.Session.Id);
+                return StatusCode(500, "Internal server error");
+            }
         }
     }
 }

@@ -47,9 +47,8 @@ namespace Captcha.Repository
                         var options = new DrawingOptions
                         {
                             Transform = Matrix3x2.CreateRotation(
-                MathF.PI * angle / 180f,
-                position
-            )
+                            MathF.PI * angle / 180f,
+                            position)
                         };
 
                         ctx.DrawText(
