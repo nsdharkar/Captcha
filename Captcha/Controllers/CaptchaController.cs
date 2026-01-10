@@ -28,16 +28,38 @@ namespace Captcha.Controllers
         [HttpGet("Captcha")]
         public IActionResult GenerateText()
         {
-            var _captchaData = new CaptchaData
+
+            _logger.LogInformation(
+            "GenerateCaptcha called. SessionId: {SessionId}",
+            HttpContext.Session.Id);
+
+            try
             {
-                CaptchaValue = _textGeneratorService.GenerateCaptchaText(),
-                CaptchaCreatedAt = DateTime.UtcNow
-            };
+                var _captchaData = new CaptchaData
+                {
+                    CaptchaValue = _textGeneratorService.GenerateCaptchaText(),
+                    CaptchaCreatedAt = DateTime.UtcNow
+                };
 
-            //if(HttpContext.Session == null)
-            HttpContext.Session.SetString("Captcha", JsonSerializer.Serialize(_captchaData));
+                //if(HttpContext.Session == null)
+                HttpContext.Session.SetString("Captcha", JsonSerializer.Serialize(_captchaData));
 
-            return File(_imageGeneratorService.GenerateCaptchaImage(_captchaData.CaptchaValue), "image/png");
+                _logger.LogInformation(
+                "Captcha text generated and stored in session. Length: {Length}, SessionId: {SessionId}",
+                _captchaData.CaptchaValue.Length,
+                HttpContext.Session.Id);
+
+                _logger.LogInformation(
+            "Captcha image generated successfully. SessionId: {SessionId}",
+            HttpContext.Session.Id);
+
+                return File(_imageGeneratorService.GenerateCaptchaImage(_captchaData.CaptchaValue), "image/png");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating captcha. SessionId: {SessionId}", HttpContext.Session.Id);
+                return StatusCode(500, "Internal server error");
+            }
         }
 
         [HttpPost("validate")]
