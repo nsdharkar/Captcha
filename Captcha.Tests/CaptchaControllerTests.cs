@@ -13,6 +13,7 @@ namespace Captcha.Tests
     {
         private readonly Mock<ICaptchaTextGeneratorService> _textServiceMock;
         private readonly Mock<ICaptchaImageGeneratorService> _imageServiceMock;
+        private readonly Mock<ICaptchaStore> _captchaStore;
         private readonly Mock<ILogger<CaptchaController>> _loggerMock;
         private readonly CaptchaController _controller;
 
@@ -20,11 +21,13 @@ namespace Captcha.Tests
         {
             _textServiceMock = new Mock<ICaptchaTextGeneratorService>();
             _imageServiceMock = new Mock<ICaptchaImageGeneratorService>();
+            _captchaStore = new Mock<ICaptchaStore>();
             _loggerMock = new Mock<ILogger<CaptchaController>>();
 
             _controller = new CaptchaController(
                 _textServiceMock.Object,
                 _imageServiceMock.Object,
+                _captchaStore.Object,
                 _loggerMock.Object
             );
 

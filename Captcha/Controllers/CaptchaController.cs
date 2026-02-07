@@ -13,106 +13,100 @@ namespace Captcha.Controllers
         private readonly ICaptchaTextGeneratorService _textGeneratorService;
 
         private readonly ICaptchaImageGeneratorService _imageGeneratorService;
+
+        private readonly ICaptchaStore _captchaStore;
+
         private readonly ILogger<CaptchaController> _logger;
 
         public CaptchaController(
             ICaptchaTextGeneratorService textGeneratorService,
             ICaptchaImageGeneratorService imageGeneratorService,
+            ICaptchaStore captchaStore,
             ILogger<CaptchaController> logger)
         {
             _textGeneratorService = textGeneratorService;
             _imageGeneratorService = imageGeneratorService;
+            _captchaStore = captchaStore;
             _logger = logger;
         }
 
-        [HttpGet("Captcha")]
+        [HttpGet("CreateCaptcha")]
         public IActionResult GenerateText()
         {
-
-            _logger.LogInformation(
-            "GenerateCaptcha called. SessionId: {SessionId}",
-            HttpContext.Session.Id);
-
             try
             {
+                var token = Guid.NewGuid().ToString("N");
+
                 var _captchaData = new CaptchaData
                 {
                     CaptchaValue = _textGeneratorService.GenerateCaptchaText(),
                     CaptchaCreatedAt = DateTime.UtcNow
                 };
 
-                //if(HttpContext.Session == null)
-                HttpContext.Session.SetString("Captcha", JsonSerializer.Serialize(_captchaData));
+                _captchaStore.Store(token, _captchaData, TimeSpan.FromMinutes(5));
 
-                _logger.LogInformation(
-                "Captcha text generated and stored in session. Length: {Length}, SessionId: {SessionId}",
-                _captchaData.CaptchaValue.Length,
-                HttpContext.Session.Id);
+                Response.Headers["Captcha-Token"] = token;
 
-                _logger.LogInformation(
-            "Captcha image generated successfully. SessionId: {SessionId}",
-            HttpContext.Session.Id);
-
-                return File(_imageGeneratorService.GenerateCaptchaImage(_captchaData.CaptchaValue), "image/png");
+                return Ok(new { Token = token });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating captcha. SessionId: {SessionId}", HttpContext.Session.Id);
+                _logger.LogError(ex.Message, "Error generating captcha.");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpGet("GetCaptcha")]
+        public IActionResult GetCaptchaImage(string token)
+        {
+            try
+            {
+                var data = _captchaStore.Get(token);
+                if (data == null)
+                {
+                    return BadRequest("Captcha expired or Invalid token");
+                }
+
+                byte[] imageBytes = _imageGeneratorService.GenerateCaptchaImage(data.CaptchaValue!);
+                return File(imageBytes, "image/png");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, "Error generating captcha image.");
                 return StatusCode(500, "Internal server error");
             }
         }
 
         [HttpPost("validate")]
-        public IActionResult ValidateCaptcha(string userInput)
+        public IActionResult ValidateCaptcha([FromBody] CaptchaValidateRequest request)
         {
-            _logger.LogInformation("ValidateCaptcha called. SessionId: {SessionId}", HttpContext.Session.Id);
-
+            
             try
             {
+                var data = _captchaStore.Get(request.Token);
 
-
-                var _captcha = HttpContext.Session.GetString("Captcha");
-
-                if (_captcha == null)
+                if (data == null)
                 {
-                    _logger.LogWarning(
-                    "Captcha expired or missing. SessionId: {SessionId}",
-                    HttpContext.Session.Id);
-
-                    return BadRequest("Captcha expired");
+                    return BadRequest("Captcha expired or Invalid token");
                 }
 
-                var _captchaText = JsonSerializer.Deserialize<CaptchaData>(_captcha);
-
-                if (_captchaText != null)
+                if (DateTime.UtcNow - data.CaptchaCreatedAt > TimeSpan.FromMinutes(5))
                 {
-                    if (DateTime.UtcNow - _captchaText.CaptchaCreatedAt > TimeSpan.FromMinutes(2))
-                    {
-                        _logger.LogWarning(
-                            "Captcha expired due to timeout. CreatedAt: {CreatedAt}, SessionId: {SessionId}",
-                            _captchaText.CaptchaCreatedAt,
-                            HttpContext.Session.Id);
-                        return BadRequest("Captcha expired");
-                    }
-                    else
-                        if (!string.Equals(userInput, _captchaText.CaptchaValue, StringComparison.OrdinalIgnoreCase))
-                    {
-                        _logger.LogWarning(
-                        "Invalid captcha attempt. InputLength: {Length}, SessionId: {SessionId}",
-                        userInput?.Length ?? 0,
-                        HttpContext.Session.Id);
-                        return BadRequest("Invalid captcha");
-                    }
-                }
-                else
-                {
-                    _logger.LogError("Failed to deserialize captcha data. SessionId: {SessionId}", HttpContext.Session.Id);
-                    return BadRequest("Invalid captcha data");
+                    _captchaStore.Remove(request.Token);
+                    return BadRequest("Captcha expired.");
                 }
 
-                HttpContext.Session.Remove("Captcha"); // One-time use
-                _logger.LogInformation("Captcha validated successfully. SessionId: {SessionId}", HttpContext.Session.Id);
-                return Ok("Valid");
+                if (!string.Equals(
+                    request.UserInput,
+                    data.CaptchaValue,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    return BadRequest("Invalid captcha.");
+                }
+
+                _captchaStore.Remove(request.Token); // one-time use
+
+                return Ok("Captcha validated.");
             }
             catch (Exception ex)
             {

@@ -10,7 +10,6 @@ var builder = WebApplication.CreateBuilder(args);
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Verbose()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-    //.MinimumLevel.Override("System", LogEventLevel.Warning)
     .Enrich.FromLogContext()
     .WriteTo.File(
         path: "Logs/app-log-.txt",
@@ -29,12 +28,12 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDistributedMemoryCache();
 
-builder.Services.AddSession();
+builder.Services.AddMemoryCache();
 
+builder.Services.AddScoped<ICaptchaStore, CaptchaStore>();
 builder.Services.AddScoped<ICaptchaTextGeneratorService, CaptchaTextGeneratorService>();
 builder.Services.AddScoped<ICaptchaImageGeneratorService, CaptchaImageGeneratorService>();
 builder.Services.AddLogging();
-//builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
@@ -48,9 +47,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
+app.UseRouting();
 
-app.UseSession();
+app.UseAuthorization();
 
 app.MapControllers();
 

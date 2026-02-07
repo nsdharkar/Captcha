@@ -18,7 +18,7 @@ namespace Captcha.Tests
         public void Clear() => _char.Clear();
         public void Remove(string key) => _char.Remove(key);
         public void Set(string key, byte[] value) => _char[key] = value;
-        public bool TryGetValue(string key, out byte[] value) => _char.TryGetValue(key, out value);
+        public bool TryGetValue(string key, out byte[]? value) => _char.TryGetValue(key, out value);
 
         public Task CommitAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task LoadAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
