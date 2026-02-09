@@ -12,6 +12,13 @@ using Path = System.IO.Path;
 
 namespace Captcha.Repository
 {
+    /// <summary>
+    /// Provides functionality to generate CAPTCHA images from text for use in user verification scenarios.
+    /// </summary>
+    /// <remarks>This service creates CAPTCHA images by rendering the provided text with randomized fonts,
+    /// rotations, and added visual noise to prevent automated recognition. The generated images are suitable for
+    /// embedding in web applications or other user interfaces that require human verification. Thread safety is not
+    /// guaranteed; create a separate instance per request if used in a multi-threaded environment.</remarks>
     public class CaptchaImageGeneratorService : ICaptchaImageGeneratorService
     {
         private readonly ILogger<CaptchaImageGeneratorService> _logger;
@@ -21,6 +28,18 @@ namespace Captcha.Repository
             _logger = logger;
         }
 
+        /// <summary>
+        /// Generates a CAPTCHA image based on the specified text and returns the image as a PNG-encoded byte array.
+        /// </summary>
+        /// <remarks>The generated image includes random fonts, rotations, and noise to enhance security
+        /// and prevent automated recognition. The output is suitable for use in web applications or other scenarios
+        /// requiring CAPTCHA validation.</remarks>
+        /// <param name="captchaText">The text to be rendered in the CAPTCHA image. Cannot be null, empty, or consist only of white-space
+        /// characters.</param>
+        /// <returns>A byte array containing the PNG-encoded CAPTCHA image representing the specified text.</returns>
+        /// <exception cref="ArgumentException">Thrown if <paramref name="captchaText"/> is null, empty, or consists only of white-space characters.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if an error occurs during image generation, such as a GDI+ failure.</exception>
+        /// <exception cref="ApplicationException">Thrown if an unexpected error occurs while generating the CAPTCHA image.</exception>
         public byte[] GenerateCaptchaImage(string captchaText)
         {
             if (string.IsNullOrWhiteSpace(captchaText))

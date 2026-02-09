@@ -1,5 +1,12 @@
 ﻿namespace Captcha.Repository
 {
+    /// <summary>
+    /// Provides functionality for generating random CAPTCHA text strings of a specified length.
+    /// </summary>
+    /// <remarks>This service is typically used to create CAPTCHA challenges for user authentication or
+    /// verification scenarios. The generated text consists of randomly selected characters from a predefined set.
+    /// Logging is performed for both successful and failed generation attempts. This class is thread-safe for
+    /// concurrent use.</remarks>
     public class CaptchaTextGeneratorService : ICaptchaTextGeneratorService
     {
         private readonly ILogger<CaptchaTextGeneratorService> _logger;
