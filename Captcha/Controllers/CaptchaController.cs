@@ -51,7 +51,7 @@ namespace Captcha.Controllers
                     CaptchaCreatedAt = DateTime.UtcNow
                 };
 
-                _captchaStore.Store(token, _captchaData, TimeSpan.FromMinutes(5));
+                _captchaStore.Store(token, _captchaData, TimeSpan.FromMinutes(2));
 
                 Response.Headers["Captcha-Token"] = token;
 
@@ -117,7 +117,7 @@ namespace Captcha.Controllers
                     return BadRequest("Captcha expired or Invalid token");
                 }
 
-                if (DateTime.UtcNow - data.CaptchaCreatedAt > TimeSpan.FromMinutes(5))
+                if (DateTime.UtcNow - data.CaptchaCreatedAt > TimeSpan.FromMinutes(2))
                 {
                     _captchaStore.Remove(request.Token);
                     return BadRequest("Captcha expired.");
