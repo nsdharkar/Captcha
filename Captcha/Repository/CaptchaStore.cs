@@ -1,4 +1,5 @@
 ﻿
+using Captcha.Interfaces;
 using Captcha.Models;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -22,8 +23,12 @@ namespace Captcha.Repository
         }
         public CaptchaData? Get(string token)
         {
-            _cache.TryGetValue(token, out CaptchaData? data);
-            return data;
+            if(_cache.TryGetValue(token, out CaptchaData? data))
+            {
+                _cache.Remove(token);
+                return data;
+            }
+            return null;
         }
 
         public void Remove(string token)

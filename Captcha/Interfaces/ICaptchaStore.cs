@@ -1,6 +1,6 @@
 ﻿using Captcha.Models;
 
-namespace Captcha.Repository
+namespace Captcha.Interfaces
 {
     public interface ICaptchaStore
     {

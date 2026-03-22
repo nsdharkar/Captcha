@@ -11,10 +11,12 @@ namespace Captcha.Tests
 {
     public class CaptchaFontManagerTests
     {
+        private readonly Mock<ICaptchaFontProvider> _fontProviderMock;
         private readonly Mock<ILogger> _loggerMock;
 
         public CaptchaFontManagerTests()
         {
+            _fontProviderMock = new Mock<ICaptchaFontProvider>();
             _loggerMock = new Mock<ILogger>();
 
             // IMPORTANT: initialize logger BEFORE any method call
@@ -28,7 +30,7 @@ namespace Captcha.Tests
             float fontSize = 28;
 
             // Act
-            var font = CaptchaFontManager.GetRandomFont(fontSize);
+            var font = _fontProviderMock.GetRandomFont(fontSize);
 
             // Assert
             Assert.NotNull(font);

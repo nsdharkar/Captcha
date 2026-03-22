@@ -1,4 +1,8 @@
+using Captcha.Configuration;
+using Captcha.ExceptionHandling;
+using Captcha.Interfaces;
 using Captcha.Repository;
+using Microsoft.AspNetCore.Diagnostics;
 using Serilog;
 using Serilog.Events;
 
@@ -33,11 +37,16 @@ builder.Services.AddMemoryCache();
 builder.Services.AddScoped<ICaptchaStore, CaptchaStore>();
 builder.Services.AddScoped<ICaptchaTextGeneratorService, CaptchaTextGeneratorService>();
 builder.Services.AddScoped<ICaptchaImageGeneratorService, CaptchaImageGeneratorService>();
-builder.Services.AddLogging();
+builder.Services.AddScoped<IValidateCaptchaService, ValidateCaptchaService>();
+builder.Services.AddScoped<ICaptchaService, CaptchaService>();
+builder.Services.AddSingleton<ICaptchaFontLoader, CaptchaFontLoader>();
+builder.Services.AddSingleton<ICaptchaFontProvider, CaptchaFontProvider>();
+builder.Services.AddSingleton<IRandomProvider, CryptoRandomProvider>();
+builder.Services.AddSingleton<ICaptchaHashService, CaptchaHashService>();
+builder.Services.Configure<CaptchaOptions>(builder.Configuration.GetSection("Captcha"));
 
 var app = builder.Build();
-
-CaptchaFontManager.Initialize(app.Services.GetRequiredService<ILogger<CaptchaFontManager>>());
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

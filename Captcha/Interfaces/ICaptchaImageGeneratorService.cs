@@ -1,4 +1,4 @@
-﻿namespace Captcha.Repository
+﻿namespace Captcha.Interfaces
 {
     public interface ICaptchaImageGeneratorService
     {
