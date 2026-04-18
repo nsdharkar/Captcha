@@ -5,8 +5,21 @@ using FluentAssertions;
 
 namespace Captcha.Tests.Infrastructure
 {
+    /// <summary>
+    /// Contains unit tests for the CaptchaStore class, verifying correct storage, retrieval, removal, and concurrent
+    /// access handling of CAPTCHA data.
+    /// </summary>
+    /// <remarks>These tests ensure that CaptchaStore behaves as expected when storing and retrieving CAPTCHA
+    /// entries, removing entries, and handling concurrent operations. The tests use an in-memory cache to simulate
+    /// storage and validate thread safety and correctness under parallel access scenarios.</remarks>
     public class CaptchaStoreTests
     {
+        /// <summary>
+        /// Verifies that storing and retrieving a CAPTCHA using the CaptchaStore returns the expected CAPTCHA data.
+        /// </summary>
+        /// <remarks>This test ensures that after storing a CaptchaData instance with a specific token,
+        /// retrieving it with the same token returns a non-null result. It validates the basic functionality of the
+        /// CaptchaStore's Store and Get methods.</remarks>
         [Fact]
         public void StoreAndGet_ShouldReturnCaptcha()
         {
@@ -28,6 +41,9 @@ namespace Captcha.Tests.Infrastructure
             result.Should().NotBeNull();
         }
 
+        /// <summary>
+        /// Verifies that removing a CAPTCHA using the CaptchaStore deletes the expected CAPTCHA data.
+        /// </summary>
         [Fact]
         public void Remove_ShouldDeleteCaptcha()
         {
@@ -47,6 +63,13 @@ namespace Captcha.Tests.Infrastructure
             result.Should().BeNull();
         }
 
+        /// <summary>
+        /// Verifies that the CaptchaStore can handle concurrent access by multiple threads without data loss or
+        /// corruption.
+        /// </summary>
+        /// <remarks>This test simulates concurrent storage and retrieval of CAPTCHA data to ensure thread
+        /// safety and correct behavior under parallel operations.</remarks>
+        /// <returns></returns>
         [Fact]
         public async Task CaptchaStore_ShouldHandleConcurrentAccess()
         {

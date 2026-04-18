@@ -10,6 +10,11 @@ namespace Captcha.Tests.Services
 {
     public class CaptchaServiceTests
     {
+        /// <summary>
+        /// Verifies that the CreateCaptcha method stores the generated CAPTCHA in the underlying store.
+        /// </summary>
+        /// <remarks>This test ensures that when CreateCaptcha is called, the ICaptchaStore.Store method
+        /// is invoked exactly once, confirming that the CAPTCHA data is persisted as expected.</remarks>
         [Fact]
         public void CreateCaptcha_ShouldStoreCaptcha()
         {
@@ -47,6 +52,12 @@ namespace Captcha.Tests.Services
                 Times.Once);
         }
 
+        /// <summary>
+        /// Verifies that the CreateCaptcha method generates unique tokens when invoked concurrently.
+        /// </summary>
+        /// <remarks>This test ensures that concurrent calls to CreateCaptcha do not produce duplicate
+        /// tokens, validating thread safety and uniqueness guarantees under load.</remarks>
+        /// <returns>A task that represents the asynchronous test operation.</returns>
         [Fact]
         public async Task CreateCaptcha_ShouldGenerateUniqueTokens_UnderConcurrency()
         {
@@ -77,6 +88,13 @@ namespace Captcha.Tests.Services
             tokens.Should().OnlyHaveUniqueItems();
         }
 
+        /// <summary>
+        /// Verifies that the CaptchaService can generate captchas concurrently under high load without errors.
+        /// </summary>
+        /// <remarks>This test simulates 1,000 parallel captcha generation requests to ensure the service
+        /// handles concurrent operations reliably. It is intended to validate thread safety and performance under
+        /// stress conditions.</remarks>
+        /// <returns></returns>
         [Fact]
         public async Task CaptchaService_ShouldHandleHighLoadGeneration()
         {
@@ -107,6 +125,14 @@ namespace Captcha.Tests.Services
             tokens.Length.Should().Be(1000);
         }
 
+        /// <summary>
+        /// Verifies that the CaptchaImageGeneratorService can handle concurrent image generation requests without
+        /// errors.
+        /// </summary>
+        /// <remarks>This test ensures that the service is thread-safe and produces the expected number of
+        /// CAPTCHA images when accessed concurrently. It simulates multiple parallel requests to validate the service's
+        /// reliability under load.</remarks>
+        /// <returns></returns>
         [Fact]
         public async Task CaptchaImageGenerator_ShouldHandleLoad()
         {

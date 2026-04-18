@@ -5,6 +5,14 @@ using Captcha.Models;
 
 namespace Captcha.Repository
 {
+    /// <summary>
+    /// Provides methods for creating, retrieving, and validating CAPTCHA challenges to help prevent automated
+    /// submissions and ensure user authenticity.
+    /// </summary>
+    /// <remarks>This service coordinates the generation of CAPTCHA text, image creation, storage, and
+    /// validation using injected dependencies. It is typically used in web applications to add human verification steps
+    /// to forms or actions. Thread safety and expiration policies depend on the underlying store and configuration
+    /// options.</remarks>
     public class CaptchaService : ICaptchaService
     {
         private readonly ICaptchaTextGeneratorService _textGeneratorService;
@@ -39,7 +47,14 @@ namespace Captcha.Repository
             _captchaHashService = captchaHashService;
         }
 
-        
+        /// <summary>
+        /// Creates a new CAPTCHA challenge and returns a unique token that identifies it.
+        /// </summary>
+        /// <remarks>The generated token should be provided to the client and used in subsequent requests
+        /// to verify the CAPTCHA response. The CAPTCHA challenge is stored with an expiration time as configured in the
+        /// options. If the token is not used before expiration, the challenge will no longer be valid.</remarks>
+        /// <returns>A string containing the unique token for the newly created CAPTCHA challenge. This token can be used to
+        /// retrieve or validate the CAPTCHA.</returns>
         public string CreateCaptcha()
         {
             var token = Guid.NewGuid().ToString("N");
@@ -60,6 +75,12 @@ namespace Captcha.Repository
             return token;
         }
 
+        /// <summary>
+        /// Retrieves the CAPTCHA image associated with the specified token.
+        /// </summary>
+        /// <param name="token">The unique token identifying the CAPTCHA to retrieve. Cannot be null or empty.</param>
+        /// <returns>A byte array containing the CAPTCHA image data.</returns>
+        /// <exception cref="CaptchaNotFoundException">Thrown if no CAPTCHA is found for the specified token.</exception>
         public byte[] GetCaptchaImage(string token)
         {
             _logger.LogDebug("Captcha image requested for token {Token}", token);
@@ -74,6 +95,11 @@ namespace Captcha.Repository
             return captchaImg;
         }
 
+        /// <summary>
+        /// Validates a CAPTCHA response using the provided validation request data.
+        /// </summary>
+        /// <param name="data">The CAPTCHA validation request containing the user response and related information. Cannot be null.</param>
+        /// <returns>A result indicating whether the CAPTCHA validation succeeded, including any relevant error information.</returns>
         public CaptchaValidationResult ValidateCaptcha(CaptchaValidateRequest data)
         {
             return _validateCaptchaService.ValidateCaptcha(data);

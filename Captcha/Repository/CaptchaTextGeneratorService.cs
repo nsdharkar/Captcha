@@ -25,6 +25,16 @@ namespace Captcha.Repository
             this._options = options;
         }
 
+        /// <summary>
+        /// Generates a random CAPTCHA text string using the configured character set and length.
+        /// </summary>
+        /// <remarks>The generated CAPTCHA text consists of randomly selected characters from the allowed
+        /// character set. Logging is performed for both successful and failed generation attempts if a logger is
+        /// configured.</remarks>
+        /// <returns>A string containing the generated CAPTCHA text. The length of the string is determined by the configured
+        /// CAPTCHA length.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown if the configured CAPTCHA length is less than or equal to zero.</exception>
+        /// <exception cref="CaptchaGenerationException">Thrown if an error occurs during CAPTCHA text generation.</exception>
         public string GenerateCaptchaText()
         {
             if (_options.CaptchaLength <= 0)
